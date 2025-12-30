@@ -3,20 +3,20 @@ import api from './api';
 import type { LoginCredentials, RegisterData, AuthResponse, DecodedToken } from '../types/auth';
 
 class AuthService {
-  private readonly TOKEN_KEY = 'access_token';
+  private readonly TOKEN_KEY = 'token';
 
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await api.post<AuthResponse>('/auth/login', credentials);
-    if (response.data.access_token) {
-      this.setToken(response.data.access_token);
+    if (response.data.token) {
+      this.setToken(response.data.token);
     }
     return response.data;
   }
 
   async register(data: RegisterData): Promise<AuthResponse> {
     const response = await api.post<AuthResponse>('/auth/register', data);
-    if (response.data.access_token) {
-      this.setToken(response.data.access_token);
+    if (response.data.token) {
+      this.setToken(response.data.token);
     }
     return response.data;
   }

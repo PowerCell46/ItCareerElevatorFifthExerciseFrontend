@@ -16,9 +16,8 @@ export interface RegisterData {
 }
 
 export interface AuthResponse {
-  access_token: string;
-  token_type?: string;
-  user?: User;
+  username: string;
+  token: string;
 }
 
 export interface DecodedToken {

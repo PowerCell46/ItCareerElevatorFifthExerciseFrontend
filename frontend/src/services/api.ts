@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosInstance } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8080/api';
 
 class ApiService {
   private api: AxiosInstance;
@@ -17,7 +17,7 @@ class ApiService {
     // Request interceptor to add auth token
     this.api.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -34,7 +34,7 @@ class ApiService {
       (error: AxiosError) => {
         if (error.response?.status === 401) {
           // Token expired or invalid
-          localStorage.removeItem('access_token');
+          localStorage.removeItem('token');
           window.location.href = '/login';
         }
         return Promise.reject(error);

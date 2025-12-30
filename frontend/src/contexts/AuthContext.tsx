@@ -54,13 +54,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const login = async (credentials: LoginCredentials) => {
     try {
       const response = await authService.login(credentials);
-      // TODO: Fetch user data from API
       const token = authService.getDecodedToken();
       if (token) {
         setUser({
           id: token.sub,
-          username: token.sub,
-          email: response.user?.email || '',
+          username: response.username,
+          email: '', // Email not in response, will need to fetch separately if needed
         });
       }
     } catch (error) {
@@ -70,12 +69,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const register = async (data: RegisterData) => {
     try {
-      await authService.register(data);
+      const response = await authService.register(data);
       const token = authService.getDecodedToken();
       if (token) {
         setUser({
           id: token.sub,
-          username: data.username,
+          username: response.username,
           email: data.email,
         });
       }
