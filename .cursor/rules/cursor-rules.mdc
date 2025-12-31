@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+---
+
+## Code formatting
+
+- Use a 4 spaces indent
+- Use camel case (exception is when writing something in Python)
