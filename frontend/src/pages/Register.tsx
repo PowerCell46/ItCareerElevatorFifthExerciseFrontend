@@ -9,6 +9,7 @@ const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{
     username?: string;
     email?: string;
@@ -81,13 +82,22 @@ const Register = () => {
             {errors.email && <div className="error-message">{errors.email}</div>}
           </div>
 
-          <div style={{ width: '100%', maxWidth: '300px' }}>
+          <div className="password-input-wrapper" style={{ width: '100%', maxWidth: '300px' }}>
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
+            />
+            <i
+              className="fa-solid fa-eye"
+              onMouseDown={() => setShowPassword(true)}
+              onMouseUp={() => setShowPassword(false)}
+              onMouseLeave={() => setShowPassword(false)}
+              onTouchStart={() => setShowPassword(true)}
+              onTouchEnd={() => setShowPassword(false)}
+              style={{ cursor: 'pointer' }}
             />
             {errors.password && <div className="error-message">{errors.password}</div>}
           </div>

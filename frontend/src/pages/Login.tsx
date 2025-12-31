@@ -8,6 +8,7 @@ import '../styles/auth.css';
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ username?: string; password?: string; general?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -62,13 +63,22 @@ const Login = () => {
             {errors.username && <div className="error-message">{errors.username}</div>}
           </div>
 
-          <div style={{ width: '100%', maxWidth: '300px' }}>
+          <div className="password-input-wrapper" style={{ width: '100%', maxWidth: '300px' }}>
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
+            />
+            <i
+              className="fa-solid fa-eye"
+              onMouseDown={() => setShowPassword(true)}
+              onMouseUp={() => setShowPassword(false)}
+              onMouseLeave={() => setShowPassword(false)}
+              onTouchStart={() => setShowPassword(true)}
+              onTouchEnd={() => setShowPassword(false)}
+              style={{ cursor: 'pointer' }}
             />
             {errors.password && <div className="error-message">{errors.password}</div>}
           </div>

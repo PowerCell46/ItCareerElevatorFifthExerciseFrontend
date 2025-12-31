@@ -72,6 +72,36 @@
     transition: all 0.3s ease-in-out;
 }
 
+.password-input-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+}
+
+.password-input-wrapper input {
+    width: 100%;
+}
+
+.password-input-wrapper i {
+    position: absolute;
+    right: -1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.1rem;
+    pointer-events: auto;
+    user-select: none;
+    transition: color 0.3s ease-in-out;
+}
+
+.password-input-wrapper i:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.password-input-wrapper i:active {
+    color: rgba(255, 255, 255, 1);
+}
+
 .main-section input:focus {
     outline: none;
     border: 1px solid rgba(255, 255, 255, 0.4);
