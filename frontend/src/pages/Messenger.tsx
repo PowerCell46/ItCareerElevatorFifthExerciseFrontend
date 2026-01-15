@@ -5,17 +5,19 @@ import websocketService from '../services/websocketService';
 import messengerService from '../services/messengerService';
 import ConversationsList from '../components/ConversationsList';
 import ChatArea from '../components/ChatArea';
+import NewMessageModal from '../components/NewMessageModal';
 import type { Conversation, Message, MessageOutput, Location } from '../types/messenger';
 import '../styles/messenger.css';
 
 const Messenger = () => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isConnected, setIsConnected] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
 
     // Get user location
     const getUserLocation = useCallback((): Promise<Location> => {
@@ -164,6 +166,88 @@ const Messenger = () => {
         [fetchMessages]
     );
 
+    // Handle logout
+    const handleLogout = useCallback(() => {
+        websocketService.disconnect();
+        logout();
+    }, [logout]);
+
+    // Handle sending message to a new user
+    const handleSendMessageToUser = useCallback(
+        async (userId: string, content: string) => {
+            if (!user || !isConnected) {
+                throw new Error('Not connected or not authenticated');
+            }
+
+            try {
+                // Get location
+                let location: Location | undefined;
+                try {
+                    location = await getUserLocation();
+                } catch (err) {
+                    console.warn('Failed to get location:', err);
+                    // Continue without location
+                }
+
+                const messagePayload = {
+                    receiverId: userId,
+                    sentAt: new Date().toISOString(),
+                    content,
+                    ...(location && { location }),
+                };
+
+                // Send via WebSocket
+                websocketService.sendMessage(messagePayload);
+
+                // Check if conversation already exists
+                let conversation = conversations.find((conv) => conv.userId === userId);
+
+                if (!conversation) {
+                    // Create new conversation
+                    conversation = {
+                        userId,
+                        username: userId, // Will be updated when we fetch conversations
+                        lastMessage: content,
+                        lastMessageTime: messagePayload.sentAt,
+                        unreadCount: 0,
+                    };
+                    setConversations((prev) => [conversation!, ...prev]);
+                } else {
+                    // Update existing conversation
+                    setConversations((prev) =>
+                        prev.map((conv) =>
+                            conv.userId === userId
+                                ? {
+                                      ...conv,
+                                      lastMessage: content,
+                                      lastMessageTime: messagePayload.sentAt,
+                                  }
+                                : conv
+                        )
+                    );
+                }
+
+                // Select the conversation and load messages
+                setSelectedConversation(conversation);
+                await fetchMessages(userId);
+
+                // Optimistically add message to UI
+                const newMessage: Message = {
+                    senderId: user.id,
+                    receiverId: userId,
+                    content,
+                    sentAt: messagePayload.sentAt,
+                    location,
+                };
+                setMessages((prev) => [...prev, newMessage]);
+            } catch (err) {
+                console.error('Error sending message to user:', err);
+                throw err;
+            }
+        },
+        [user, isConnected, getUserLocation, conversations, fetchMessages]
+    );
+
     // Initialize WebSocket connection
     useEffect(() => {
         const token = authService.getToken();
@@ -253,12 +337,20 @@ const Messenger = () => {
                 conversations={conversations}
                 selectedConversationId={selectedConversation?.userId || null}
                 onSelectConversation={handleSelectConversation}
+                onNewMessageClick={() => setIsNewMessageModalOpen(true)}
+                onLogout={handleLogout}
             />
             <ChatArea
                 conversation={selectedConversation}
                 messages={messages}
                 currentUserId={user.id}
                 onSendMessage={handleSendMessage}
+                isConnected={isConnected}
+            />
+            <NewMessageModal
+                isOpen={isNewMessageModalOpen}
+                onClose={() => setIsNewMessageModalOpen(false)}
+                onSendMessage={handleSendMessageToUser}
                 isConnected={isConnected}
             />
         </div>

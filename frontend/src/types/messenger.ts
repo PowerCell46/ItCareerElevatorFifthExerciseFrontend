@@ -21,6 +21,14 @@ export interface Conversation {
     unreadCount?: number;
 }
 
+// Backend DTO for conversation summary
+export interface ConversationSummaryResponseDTO {
+    senderId: string;
+    receiverId: string;
+    content: string;
+    createdAt: string; // ISO string from LocalDateTime
+}
+
 export interface MessageOutput {
     from: string;
     text: string;

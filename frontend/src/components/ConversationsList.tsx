@@ -5,18 +5,27 @@ interface ConversationsListProps {
     conversations: Conversation[];
     selectedConversationId: string | null;
     onSelectConversation: (conversation: Conversation) => void;
+    onNewMessageClick: () => void;
+    onLogout: () => void;
 }
 
 const ConversationsList = ({
     conversations,
     selectedConversationId,
     onSelectConversation,
+    onNewMessageClick,
+    onLogout,
 }: ConversationsListProps) => {
     return (
         <aside className="conversations-sidebar">
             <div className="sidebar-header">
                 <h2>Chats</h2>
-                <i className="fa-solid fa-pen-to-square"></i>
+                <div className="sidebar-header-actions">
+                    <i className="fa-solid fa-pen-to-square" onClick={onNewMessageClick} title="New message"></i>
+                    <button className="logout-button" onClick={onLogout} title="Logout">
+                        <i className="fa-solid fa-sign-out-alt"></i>
+                    </button>
+                </div>
             </div>
 
             <div className="conversations-list">
