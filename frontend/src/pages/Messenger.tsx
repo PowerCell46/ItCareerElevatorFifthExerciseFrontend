@@ -6,8 +6,10 @@ import messengerService from '../services/messengerService';
 import ConversationsList from '../components/ConversationsList';
 import ChatArea from '../components/ChatArea';
 import NewMessageModal from '../components/NewMessageModal';
+import NotificationPopup from '../components/NotificationPopup';
 import type { Conversation, Message, MessageOutput, Location } from '../types/messenger';
 import '../styles/messenger.css';
+import '../styles/notification.css';
 
 const Messenger = () => {
     const { user, logout } = useAuth();
@@ -18,6 +20,7 @@ const Messenger = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
+    const [notification, setNotification] = useState<{ from: string; text: string; username?: string } | null>(null);
 
     // Get user location
     const getUserLocation = useCallback((): Promise<Location> => {
@@ -70,35 +73,61 @@ const Messenger = () => {
     // Handle incoming WebSocket messages
     const handleIncomingMessage = useCallback(
         (messageOutput: MessageOutput) => {
-            if (!selectedConversation || !user) return;
+            if (!user) return;
 
             // Convert MessageOutput to Message format
             const newMessage: Message = {
                 senderId: messageOutput.from,
                 receiverId: user.id,
                 content: messageOutput.text,
-                sentAt: new Date().toISOString(),
+                sentAt: messageOutput.time || new Date().toISOString(),
             };
 
-            // Add message if it's from the selected conversation
-            if (messageOutput.from === selectedConversation.userId) {
+            // Find the conversation to get username
+            const conversation = conversations.find((conv) => conv.userId === messageOutput.from);
+            const username = conversation?.username || messageOutput.from;
+
+            // Show notification for all incoming messages
+            setNotification({
+                from: messageOutput.from,
+                text: messageOutput.text,
+                username: username,
+            });
+
+            // Add message to active chat if it's from the selected conversation
+            if (selectedConversation && messageOutput.from === selectedConversation.userId) {
                 setMessages((prev) => [...prev, newMessage]);
             }
 
-            // Update conversation list with last message
-            setConversations((prev) =>
-                prev.map((conv) =>
-                    conv.userId === messageOutput.from
-                        ? {
-                              ...conv,
-                              lastMessage: messageOutput.text,
-                              lastMessageTime: new Date().toISOString(),
-                          }
-                        : conv
-                )
-            );
+            // Update or create conversation in the list
+            setConversations((prev) => {
+                const existingIndex = prev.findIndex((conv) => conv.userId === messageOutput.from);
+                
+                if (existingIndex >= 0) {
+                    // Update existing conversation
+                    return prev.map((conv) =>
+                        conv.userId === messageOutput.from
+                            ? {
+                                  ...conv,
+                                  lastMessage: messageOutput.text,
+                                  lastMessageTime: messageOutput.time || new Date().toISOString(),
+                              }
+                            : conv
+                    );
+                } else {
+                    // Create new conversation
+                    const newConversation: Conversation = {
+                        userId: messageOutput.from,
+                        username: messageOutput.from, // Will be updated when we fetch conversations
+                        lastMessage: messageOutput.text,
+                        lastMessageTime: messageOutput.time || new Date().toISOString(),
+                        unreadCount: 0,
+                    };
+                    return [newConversation, ...prev];
+                }
+            });
         },
-        [selectedConversation, user]
+        [selectedConversation, user, conversations]
     );
 
     // Send message
@@ -352,6 +381,18 @@ const Messenger = () => {
                 onClose={() => setIsNewMessageModalOpen(false)}
                 onSendMessage={handleSendMessageToUser}
                 isConnected={isConnected}
+            />
+            <NotificationPopup
+                message={notification}
+                onClose={() => setNotification(null)}
+                onClick={() => {
+                    if (notification) {
+                        const conversation = conversations.find((conv) => conv.userId === notification.from);
+                        if (conversation) {
+                            handleSelectConversation(conversation);
+                        }
+                    }
+                }}
             />
         </div>
     );
